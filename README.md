@@ -85,7 +85,7 @@ jwt.expiration=86400000
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=parkshererw@gmail.com
-spring.mail.password=vgdbzcuolecvwulk
+spring.mail.password=.....
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
