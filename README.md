@@ -182,13 +182,9 @@ ParkShere/
 
 ## 🔐 Default Credentials
 
-### Admin Account
-- **Username**: `admin`
-- **Password**: `admin123`
-
 ### Test User Account
-- **Username**: `testuser`
-- **Password**: `password123`
+- **Username**: `test`
+- **Password**: `Test123`
 
 ## 🧪 Testing
 
