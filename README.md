@@ -214,7 +214,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/Samillah47)
+- **My Name** - [Samillah Mutoni](https://github.com/Samillah47)
 
 ## 🙏 Acknowledgments
 
