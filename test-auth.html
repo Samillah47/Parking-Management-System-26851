@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <div>
+        <h2>1. Login</h2>
+        <input id="username" placeholder="Username" value="admin">
+        <input id="password" type="password" placeholder="Password" value="admin123">
+        <button onclick="login()">Login</button>
+        <p id="loginResult"></p>
+    </div>
+    
+    <div>
+        <h2>2. Test Protected Endpoint</h2>
+        <button onclick="testProtected()">Test /users/profile</button>
+        <p id="testResult"></p>
+    </div>
+    
+    <div>
+        <h2>Token Info</h2>
+        <p id="tokenInfo"></p>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:8080/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    document.getElementById('loginResult').textContent = 'Login successful!';
+                    document.getElementById('tokenInfo').textContent = 'Token: ' + data.token.substring(0, 50) + '...';
+                } else {
+                    document.getElementById('loginResult').textContent = 'Login failed: ' + JSON.stringify(data);
+                }
+            } catch (error) {
+                document.getElementById('loginResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testProtected() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                document.getElementById('testResult').textContent = 'No token found. Please login first.';
+                return;
+            }
+            
+            console.log('Using token:', token.substring(0, 50) + '...');
+            console.log('Authorization header:', 'Bearer ' + token.substring(0, 20) + '...');
+            
+            try {
+                const response = await fetch('http://localhost:8080/users/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    document.getElementById('testResult').textContent = 'Success: ' + JSON.stringify(data);
+                } else {
+                    document.getElementById('testResult').textContent = 'Failed: ' + JSON.stringify(data);
+                }
+            } catch (error) {
+                document.getElementById('testResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Display current token on load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('tokenInfo').textContent = 'Token: ' + token.substring(0, 50) + '...';
+            }
+        };
+    </script>
+</body>
+</html>
