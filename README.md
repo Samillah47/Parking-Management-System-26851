@@ -141,7 +141,6 @@ Frontend will run on `http://localhost:5173`
 
 ### Data Flow
 <img width="1761" height="941" alt="Data Flow (Level 1)" src="https://github.com/user-attachments/assets/6510b9b9-297f-4a53-86b0-05d529a0e361" />
- Diagram
 *System data flow between components*
 
 ### Sequence Diagram
@@ -150,7 +149,7 @@ Frontend will run on `http://localhost:5173`
 
 
 ## Entity Relationship Diagram
-#<img width="1822" height="806" alt="Entity Relationship Diagram (ERD)" src="https://github.com/user-attachments/assets/a8908a2a-6396-481a-87dc-6e4414b6ddb0" />
+<img width="1822" height="806" alt="Entity Relationship Diagram (ERD)" src="https://github.com/user-attachments/assets/a8908a2a-6396-481a-87dc-6e4414b6ddb0" />
 *Database schema and relationships*
 
 ## 🏗️ Project Structure
