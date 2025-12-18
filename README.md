@@ -136,21 +136,21 @@ Frontend will run on `http://localhost:5173`
 ## 📊 System Architecture
 
 ### Activity Diagram
+User parking slot booking workflow
 <img width="752" height="1163" alt="Activity Diagram - Parking Spot Reservation" src="https://github.com/user-attachments/assets/de53e968-9926-4aa9-9034-47b082a98697" />
-*User parking slot booking workflow*
 
 ### Data Flow
+System data flow between components
 <img width="1761" height="941" alt="Data Flow (Level 1)" src="https://github.com/user-attachments/assets/6510b9b9-297f-4a53-86b0-05d529a0e361" />
-*System data flow between components*
 
 ### Sequence Diagram
+Reserve parking slot interaction sequence
 <img width="1664" height="1024" alt="Sequence Diagram - Reserve Parking Spot" src="https://github.com/user-attachments/assets/4f8f8fe2-555b-40d0-8986-7022c6e3cc23" />
-*Reserve parking slot interaction sequence*
-
 
 ## Entity Relationship Diagram
+Database schema and relationships
 <img width="1822" height="806" alt="Entity Relationship Diagram (ERD)" src="https://github.com/user-attachments/assets/a8908a2a-6396-481a-87dc-6e4414b6ddb0" />
-*Database schema and relationships*
+
 
 ## 🏗️ Project Structure
 
