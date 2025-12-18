@@ -56,7 +56,7 @@ A comprehensive parking management system built with Spring Boot and React, desi
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/<your-username>/Parking-Management-System-26851.git
+git clone https://github.com/Samillah47/Parking-Management-System-26851.git
 cd Parking-Management-System-26851
 ```
 
@@ -64,21 +64,31 @@ cd Parking-Management-System-26851
 Create a PostgreSQL database and update `backend/src/main/resources/application.properties`:
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/parkshere_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+spring.application.name=Parking Management System
+spring.datasource.url=jdbc:postgresql://localhost:5432/parking_management_db
+spring.datasource.username=postgres
+spring.datasource.password=......
+
+# Suppress static resource warnings
+spring.web.resources.add-mappings=false
+
+
+# Hibernate settings (optional but common)
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 
-# JWT Configuration
-app.jwtSecret=parkshereSecretKey
-app.jwtExpirationMs=86400000
+# JWT CONFIGURATION
+jwt.secret=3f9a871bc44d891e72aa5c917df40a0b4f8c32d2e55bc1a8e66d992ff3ccdeaa7b2c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1
+jwt.expiration=86400000  
 
-# Email Configuration (Optional)
+#mail
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=your_email@gmail.com
-spring.mail.password=your_app_password
+spring.mail.username=parkshererw@gmail.com
+spring.mail.password=vgdbzcuolecvwulk
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
 ```
 
 ### 3. Backend Setup
@@ -126,19 +136,21 @@ Frontend will run on `http://localhost:5173`
 ## 📊 System Architecture
 
 ### Activity Diagram
-![Activity Diagram](diagrams/activity-diagram.png)
+<img width="752" height="1163" alt="Activity Diagram - Parking Spot Reservation" src="https://github.com/user-attachments/assets/de53e968-9926-4aa9-9034-47b082a98697" />
 *User parking slot booking workflow*
 
-### Data Flow Diagram
-![Data Flow Diagram](diagrams/data-flow-diagram.png)
+### Data Flow
+<img width="1761" height="941" alt="Data Flow (Level 1)" src="https://github.com/user-attachments/assets/6510b9b9-297f-4a53-86b0-05d529a0e361" />
+ Diagram
 *System data flow between components*
 
 ### Sequence Diagram
-![Sequence Diagram](diagrams/sequence-diagram.png)
+<img width="1664" height="1024" alt="Sequence Diagram - Reserve Parking Spot" src="https://github.com/user-attachments/assets/4f8f8fe2-555b-40d0-8986-7022c6e3cc23" />
 *Reserve parking slot interaction sequence*
 
-### Entity Relationship Diagram
-![ERD](diagrams/erd-diagram.png)
+
+## Entity Relationship Diagram
+#<img width="1822" height="806" alt="Entity Relationship Diagram (ERD)" src="https://github.com/user-attachments/assets/a8908a2a-6396-481a-87dc-6e4414b6ddb0" />
 *Database schema and relationships*
 
 ## 🏗️ Project Structure
@@ -206,7 +218,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Your Name** - *Initial work* - [YourGitHub](https://github.com/Samillah47)
 
 ## 🙏 Acknowledgments
 
