@@ -137,6 +137,7 @@ Frontend will run on `http://localhost:5173`
 
 ### Activity Diagram
 User parking slot booking workflow
+
 <img width="752" height="1163" alt="Activity Diagram - Parking Spot Reservation" src="https://github.com/user-attachments/assets/de53e968-9926-4aa9-9034-47b082a98697" />
 
 ### Data Flow
