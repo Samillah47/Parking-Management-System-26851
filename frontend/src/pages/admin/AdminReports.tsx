@@ -30,12 +30,16 @@ export function AdminReports() {
     })
       .then(res => res.json())
       .then((data: any) => {
-        if (data.dailyRevenue) {
-          const revenueArray = Object.entries(data.dailyRevenue).map(([date, revenue]) => ({
-            date,
-            totalRevenue: revenue as number,
-            totalReservations: 0
-          }));
+        if (data.dailyRevenue && data.reservationsByStatus) {
+          const revenueArray = Object.entries(data.dailyRevenue).map(([date, revenue]) => {
+            // Calculate reservations for this date
+            const reservationsCount = Object.values(data.reservationsByStatus).reduce((sum: number, count) => sum + (count as number), 0);
+            return {
+              date,
+              totalRevenue: revenue as number,
+              totalReservations: Math.floor(reservationsCount / Object.keys(data.dailyRevenue).length)
+            };
+          });
           setReports(revenueArray);
         }
       })

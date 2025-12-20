@@ -27,6 +27,9 @@ public class StaffController {
     @Autowired
     private ParkingSpotRepository parkingSpotRepository;
 
+    @Autowired
+    private parkingSystem.backend.repository.ParkingReservationRepository reservationRepository;
+
     @GetMapping("/dashboard")
     public ResponseEntity<StaffDashboardDTO> getDashboard() {
         return ResponseEntity.ok(staffService.getStaffDashboard());
@@ -95,5 +98,14 @@ public class StaffController {
     @PutMapping("/location")
     public ResponseEntity<?> updateLocation(@RequestBody Map<String, Long> request) {
         return ResponseEntity.ok(userService.updateUserLocation(request.get("locationId")));
+    }
+
+    @GetMapping("/pending-payments")
+    public ResponseEntity<org.springframework.data.domain.Page<parkingSystem.backend.model.ParkingReservation>> getPendingPayments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(reservationRepository.findByStatusIn(
+            java.util.Arrays.asList("ACTIVE", "COMPLETED"), pageable));
     }
 }

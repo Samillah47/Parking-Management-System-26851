@@ -132,7 +132,7 @@ public class UserService {
         userRepository.save(user);
 
         System.out.println("OTP for " + email + ": " + otp);
-        // emailService.sendOtpEmail(email, otp); // Disabled - check console for OTP
+        emailService.sendOtpEmail(email, otp);
     }
 
     public void resetPassword(String email, String otp, String newPassword) {
@@ -233,6 +233,7 @@ public class UserService {
         reservation.setParkingSpot(spot);
         reservation.setStartTime(LocalDateTime.now());
         reservation.setStatus("ACTIVE");
+        reservation.setTotalAmount(spot.getHourlyRate());
         
         // Update spot status
         spot.setStatus("OCCUPIED");

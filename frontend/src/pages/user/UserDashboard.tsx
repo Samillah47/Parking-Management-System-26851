@@ -56,18 +56,21 @@ export function UserDashboard() {
       ])
       .then(([reservations, vehicles]: [ReservationBackendResponse[], VehicleBackendResponse[]]) => {
         // 4. Map data into the local UI state shape
+        const activeReservations = reservations.filter((r) => r.status === 'ACTIVE');
         setSummary({
           username: user.username,
-          activeReservationsCount: reservations.filter((r) => r.status === 'ACTIVE').length,
+          activeReservationsCount: activeReservations.length,
           totalVehicles: vehicles.length,
-          recentReservations: reservations.map((r) => ({
-            reservationId: r.reservationId,
-            spotNumber: r.parkingSpot.spotNumber,
-            startTime: r.startTime,
-            endTime: r.endTime,
-            status: r.status,
-            totalAmount: r.totalAmount || 0
-          })).slice(0, 5) // Show top 5 latest
+          recentReservations: reservations
+            .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+            .map((r) => ({
+              reservationId: r.reservationId,
+              spotNumber: r.parkingSpot.spotNumber,
+              startTime: r.startTime,
+              endTime: r.endTime,
+              status: r.status,
+              totalAmount: r.totalAmount || 0
+            })).slice(0, 5) // Show top 5 recent activities
         });
       })
       .catch(err => {
@@ -130,15 +133,15 @@ export function UserDashboard() {
             <h3 className="text-lg font-semibold text-gray-900">
               Recent Activities
             </h3>
-            <Button size="sm" onClick={() => navigate('/user/reservations')}>
-              View All
+            <Button size="sm" onClick={() => navigate('/user/history')}>
+              View All History
             </Button>
           </div>
           <div className="space-y-3">
             {summary.recentReservations.length === 0 ? (
               <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-100 rounded-lg">
                 <Calendar className="mx-auto mb-2 text-gray-300" size={48} />
-                <p>No reservations yet</p>
+                <p>No activities yet</p>
               </div>
             ) : (
               summary.recentReservations.map(reservation => (
@@ -162,7 +165,9 @@ export function UserDashboard() {
                     </p>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                       reservation.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 
-                      reservation.status === 'COMPLETED' ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'
+                      reservation.status === 'RESERVED' ? 'bg-yellow-100 text-yellow-700' :
+                      reservation.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' : 
+                      reservation.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
                     }`}>
                       {reservation.status}
                     </span>

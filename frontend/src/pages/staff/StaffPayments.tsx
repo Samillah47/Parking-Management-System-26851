@@ -33,6 +33,7 @@ interface PaymentData {
   endTime?: string;
   status: string;
   totalAmount?: number;
+  currentCost?: number;
 }
 
 interface PageResponse {
@@ -47,6 +48,7 @@ export function StaffPayments() {
   const [page, setPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentCosts, setCurrentCosts] = useState<Record<number, number>>({});
   const { token } = useAuth();
 
   useEffect(() => {
@@ -101,6 +103,37 @@ export function StaffPayments() {
     };
   }, [token, page]); // Dependencies: re-run when token or page changes
 
+  // Calculate current costs for active reservations
+  useEffect(() => {
+    if (!token || payments.length === 0) return;
+
+    const updateCosts = async () => {
+      const costs: Record<number, number> = {};
+      
+      for (const payment of payments) {
+        if (payment.status === 'ACTIVE') {
+          try {
+            const response = await fetch(
+              `http://localhost:8080/reservations/${payment.reservationId}/current-cost`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = await response.json();
+            costs[payment.reservationId] = data.currentCost;
+          } catch (err) {
+            console.error('Error fetching cost:', err);
+          }
+        }
+      }
+      
+      setCurrentCosts(costs);
+    };
+
+    updateCosts();
+    const interval = setInterval(updateCosts, 3600000); // Update every hour
+
+    return () => clearInterval(interval);
+  }, [token, payments]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -112,6 +145,15 @@ export function StaffPayments() {
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200';
     }
+  };
+
+  const calculateDuration = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diffMs = now.getTime() - start.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
   };
 
   return (
@@ -195,16 +237,32 @@ export function StaffPayments() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-600">
-                        {new Date(payment.startTime).toLocaleString()}
-                      </span>
+                      <div>
+                        <span className="text-sm text-gray-600">
+                          {new Date(payment.startTime).toLocaleString()}
+                        </span>
+                        {payment.status === 'ACTIVE' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Duration: {calculateDuration(payment.startTime)}
+                          </p>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {payment.totalAmount
-                          ? `RWF ${payment.totalAmount.toLocaleString()}`
-                          : 'Pending'}
-                      </span>
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {payment.status === 'ACTIVE' && currentCosts[payment.reservationId]
+                            ? `RWF ${currentCosts[payment.reservationId].toLocaleString()}`
+                            : payment.totalAmount
+                            ? `RWF ${payment.totalAmount.toLocaleString()}`
+                            : 'Pending'}
+                        </span>
+                        {payment.status === 'ACTIVE' && (
+                          <p className="text-xs text-yellow-600 mt-1">
+                            ⏱ Ongoing - Updates every hour
+                          </p>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span

@@ -32,6 +32,7 @@ import { UserReservations } from './pages/user/UserReservations';
 import { UserVehicles } from './pages/user/UserVehicles';
 import { UserPayments } from './pages/user/UserPayments';
 import { UserSpots } from './pages/user/UserSpots';
+import { UserHistory } from './pages/user/UserHistory';
 
 // Common Pages
 import { ProfilePage } from './pages/Common/ProfilePage';
@@ -119,6 +120,7 @@ function App() {
                         <Route path="vehicles" element={<UserVehicles />} />
                         <Route path="payments" element={<UserPayments />} />
                         <Route path="spots" element={<UserSpots />} />
+                        <Route path="history" element={<UserHistory />} />
                         <Route path="profile" element={<ProfilePage />} />
                         <Route
                           path="*"

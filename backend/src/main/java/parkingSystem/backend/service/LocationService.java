@@ -2,11 +2,13 @@ package parkingSystem.backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import parkingSystem.backend.dto.LocationDTO;
 import parkingSystem.backend.model.Location;
 import parkingSystem.backend.model.enums.LocationType;
 import parkingSystem.backend.repository.LocationRepository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -14,6 +16,61 @@ public class LocationService {
 
     @Autowired
     private LocationRepository locationRepository;
+
+    @Transactional(readOnly = true)
+    public List<LocationDTO> getLocationHierarchy() {
+        try {
+            List<Location> provinces = locationRepository.findByType(LocationType.PROVINCE);
+            if (provinces == null || provinces.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            List<LocationDTO> result = new ArrayList<>();
+            for (Location province : provinces) {
+                try {
+                    result.add(convertToDTO(province));
+                } catch (Exception e) {
+                    System.err.println("Error converting province: " + province.getName() + " - " + e.getMessage());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error in getLocationHierarchy: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    private LocationDTO convertToDTO(Location location) {
+        try {
+            LocationDTO dto = new LocationDTO();
+            dto.setLocationId(location.getLocationId());
+            dto.setName(location.getName());
+            dto.setType(location.getType());
+            dto.setParentId(location.getParent() != null ? location.getParent().getLocationId() : null);
+            
+            List<LocationDTO> childrenDTOs = new ArrayList<>();
+            try {
+                if (location.getChildren() != null && !location.getChildren().isEmpty()) {
+                    for (Location child : new ArrayList<>(location.getChildren())) {
+                        try {
+                            childrenDTOs.add(convertToDTO(child));
+                        } catch (Exception e) {
+                            System.err.println("Error converting child: " + e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error accessing children: " + e.getMessage());
+            }
+            dto.setChildren(childrenDTOs);
+            
+            return dto;
+        } catch (Exception e) {
+            System.err.println("Error in convertToDTO: " + e.getMessage());
+            throw e;
+        }
+    }
 
     public List<Location> getProvinces() {
         return locationRepository.findByType(LocationType.PROVINCE);
@@ -95,5 +152,18 @@ public class LocationService {
             });
         
         return village;
+    }
+
+    public void deleteLocation(Long locationId) {
+        Location location = locationRepository.findById(locationId)
+            .orElseThrow(() -> new RuntimeException("Location not found"));
+        locationRepository.delete(location);
+    }
+
+    public Location updateLocation(Long locationId, String newName) {
+        Location location = locationRepository.findById(locationId)
+            .orElseThrow(() -> new RuntimeException("Location not found"));
+        location.setName(newName);
+        return locationRepository.save(location);
     }
 }

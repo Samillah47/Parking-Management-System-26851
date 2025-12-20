@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@lombok.EqualsAndHashCode(exclude = "user")
+@lombok.ToString(exclude = "user")
 public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

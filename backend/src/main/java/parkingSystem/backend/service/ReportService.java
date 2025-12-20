@@ -36,12 +36,13 @@ public class ReportService {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
 
-        // Get all completed reservations in the date range
-        List<ParkingReservation> reservations = reservationRepository
-                .findCompletedBetween(startDateTime, endDateTime);
+        // Get all reservations in the date range (not just completed)
+        List<ParkingReservation> allReservations = reservationRepository.findAll().stream()
+                .filter(r -> r.getStartTime().isAfter(startDateTime) && r.getStartTime().isBefore(endDateTime))
+                .collect(Collectors.toList());
 
-        // Calculate total revenue
-        BigDecimal totalRevenue = reservations.stream()
+        // Calculate total revenue (including active reservations)
+        BigDecimal totalRevenue = allReservations.stream()
                 .map(r -> r.getTotalAmount() != null ? r.getTotalAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -49,15 +50,15 @@ public class ReportService {
         Map<String, BigDecimal> dailyRevenue = new HashMap<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         
-        for (ParkingReservation reservation : reservations) {
-            if (reservation.getEndTime() != null && reservation.getTotalAmount() != null) {
-                String date = reservation.getEndTime().toLocalDate().format(formatter);
+        for (ParkingReservation reservation : allReservations) {
+            if (reservation.getTotalAmount() != null) {
+                String date = reservation.getStartTime().toLocalDate().format(formatter);
                 dailyRevenue.merge(date, reservation.getTotalAmount(), BigDecimal::add);
             }
         }
 
         // Count reservations by status
-        Map<String, Long> reservationsByStatus = reservations.stream()
+        Map<String, Long> reservationsByStatus = allReservations.stream()
                 .collect(Collectors.groupingBy(
                         ParkingReservation::getStatus,
                         Collectors.counting()
@@ -67,7 +68,7 @@ public class ReportService {
         report.setTotalRevenue(totalRevenue);
         report.setDailyRevenue(dailyRevenue);
         report.setReservationsByStatus(reservationsByStatus);
-        report.setTotalReservations((long) reservations.size());
+        report.setTotalReservations((long) allReservations.size());
 
         return report;
     }

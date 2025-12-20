@@ -20,6 +20,7 @@ import parkingSystem.backend.repository.VehicleRepository;
 import parkingSystem.backend.service.ParkingReservationService;
 import parkingSystem.backend.service.UserService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -89,6 +90,34 @@ public class ParkingReservationController {
         return ResponseEntity.ok(reservationService.getReservationsByUserId(userId));
     }
 
+    @GetMapping("/{id}/current-cost")
+    public ResponseEntity<?> getCurrentCost(@PathVariable Long id) {
+        return ResponseEntity.ok(java.util.Map.of("currentCost", reservationService.calculateCurrentCost(id)));
+    }
+
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<ParkingReservation> activateReservation(@PathVariable Long id) {
+        ParkingReservation reservation = reservationService.getReservationById(id);
+        
+        if (!"RESERVED".equals(reservation.getStatus())) {
+            throw new IllegalArgumentException("Only reserved spots can be activated");
+        }
+        
+        // Keep the reservation fee already paid
+        BigDecimal reservationFee = reservation.getTotalAmount();
+        
+        reservation.setStatus("ACTIVE");
+        reservation.setStartTime(LocalDateTime.now());
+        reservation.setTotalAmount(reservationFee); // Start with reservation fee
+        
+        ParkingSpot spot = reservation.getParkingSpot();
+        spot.setStatus("OCCUPIED");
+        spot.setOccupiedSince(LocalDateTime.now());
+        parkingSpotRepository.save(spot);
+        
+        return ResponseEntity.ok(reservationRepository.save(reservation));
+    }
+
     @PostMapping("/users/reservations")
     public ResponseEntity<ParkingReservation> createReservation(
             @RequestBody ReservationRequestDTO request) {
@@ -111,13 +140,14 @@ public class ParkingReservationController {
                 throw new RuntimeException("Parking spot is not available");
             }
             
-            // Create reservation (for future use)
+            // Create reservation with 1-hour reservation fee
             ParkingReservation reservation = new ParkingReservation();
             reservation.setUser(user);
             reservation.setVehicle(vehicle);
             reservation.setParkingSpot(spot);
             reservation.setStartTime(LocalDateTime.now());
             reservation.setStatus("RESERVED");
+            reservation.setTotalAmount(spot.getHourlyRate()); // Reservation fee = 1 hour rate
             
             reservation = reservationRepository.save(reservation);
             

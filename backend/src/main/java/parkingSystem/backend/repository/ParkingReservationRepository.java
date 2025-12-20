@@ -20,6 +20,7 @@ public interface ParkingReservationRepository extends JpaRepository<ParkingReser
     List<ParkingReservation> findByStatus(String status);
     Page<ParkingReservation> findByUser(User user, Pageable pageable);
     long countByStatus(String status);
+    long countByStatusIn(List<String> statuses);
     
     @Query("SELECT r FROM ParkingReservation r WHERE r.user = :user AND r.startTime > CURRENT_TIMESTAMP ORDER BY r.startTime ASC")
     List<ParkingReservation> findUpcomingByUser(@Param("user") User user);

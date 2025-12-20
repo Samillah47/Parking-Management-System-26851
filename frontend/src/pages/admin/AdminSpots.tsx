@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { X, Filter, Edit, Trash2, Plus } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export function AdminSpots() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const { token } = useAuth();
+  const navigate = useNavigate();
 
   // Column filters
   const [filters, setFilters] = useState({
@@ -120,7 +122,10 @@ export function AdminSpots() {
               Clear Filters
             </button>
           )}
-          <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <button 
+            onClick={() => navigate('/admin/spots/add')}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
             <Plus size={16} className="mr-2" />
             Add Spot
           </button>

@@ -168,3 +168,6 @@ logs
 # Temporary files
 *.tmp
 *.temp
+
+# local environment variables
+.env

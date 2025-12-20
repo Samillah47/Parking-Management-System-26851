@@ -16,6 +16,7 @@ public class StaffDashboardDTO {
     private Long occupiedSpots;
     private Long reservedSpots;
     private Double occupancyRate;
+    private Long pendingPayments;
     private List<QuickAction> quickActions;
 }
 

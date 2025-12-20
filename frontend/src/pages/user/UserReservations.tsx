@@ -28,6 +28,7 @@ export function UserReservations() {
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [selectedSpot, setSelectedSpot] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [currentCosts, setCurrentCosts] = useState<Record<number, number>>({});
   const { token, user } = useAuth();
 
   useEffect(() => {
@@ -51,6 +52,32 @@ export function UserReservations() {
     })
     .catch(err => console.error('Fetch error:', err));
   }, [token, user]);
+
+  // Update costs for reservations
+  useEffect(() => {
+    if (!token || reservations.length === 0) return;
+
+    const updateCosts = async () => {
+      const costs: Record<number, number> = {};
+      for (const res of reservations) {
+        try {
+          const response = await fetch(
+            `http://localhost:8080/reservations/${res.reservationId}/current-cost`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await response.json();
+          costs[res.reservationId] = data.currentCost;
+        } catch (err) {
+          console.error('Error fetching cost:', err);
+        }
+      }
+      setCurrentCosts(costs);
+    };
+
+    updateCosts();
+    const interval = setInterval(updateCosts, 3600000);
+    return () => clearInterval(interval);
+  }, [token, reservations]);
 
   const handleCreateReservation = async () => {
     if (!selectedVehicle || !selectedSpot) return;
@@ -90,15 +117,6 @@ export function UserReservations() {
         </button>
       </div>
       
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start space-x-3">
-        <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-        </svg>
-        <div className="text-sm text-yellow-800">
-          <p className="font-semibold mb-1">📅 Future Reservations</p>
-          <p>These are spots reserved for future use. To see currently parked vehicles, go to "Parking Spots" page.</p>
-        </div>
-      </div>
       
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-6">
@@ -194,9 +212,36 @@ export function UserReservations() {
                 </div>
                 <div className="flex justify-between pt-2 border-t">
                   <span className="text-gray-600 font-semibold">Amount:</span>
-                  <span className="font-bold text-indigo-600 text-lg">RWF {(r.totalAmount || 0).toLocaleString()}</span>
+                  <span className="font-bold text-indigo-600 text-lg">
+                    RWF {(currentCosts[r.reservationId] || r.totalAmount || 0).toLocaleString()}
+                  </span>
                 </div>
               </div>
+              
+              <button
+                onClick={async () => {
+                  if (confirm('Start parking now in this reserved spot?')) {
+                    try {
+                      const response = await fetch(
+                        `http://localhost:8080/reservations/${r.reservationId}/activate`,
+                        {
+                          method: 'PUT',
+                          headers: { Authorization: `Bearer ${token}` }
+                        }
+                      );
+                      if (response.ok) {
+                        alert('Parking started!');
+                        window.location.reload();
+                      }
+                    } catch (err) {
+                      alert('Failed to start parking');
+                    }
+                  }
+                }}
+                className="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+              >
+                🚗 Park Now
+              </button>
             </div>
           ))}
         </div>

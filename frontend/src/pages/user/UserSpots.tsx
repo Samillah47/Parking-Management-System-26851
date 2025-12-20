@@ -32,6 +32,7 @@ export function UserSpots() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [parkedVehicles, setParkedVehicles] = useState<ParkedVehicle[]>([]);
+  const [currentCosts, setCurrentCosts] = useState<Record<number, number>>({});
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -105,6 +106,41 @@ export function UserSpots() {
       .catch(err => console.error('Error loading parked vehicles:', err));
     }
   }, [token, user, page, statusFilter]);
+
+  // Update costs for parked vehicles every minute
+  useEffect(() => {
+    if (!token || parkedVehicles.length === 0) return;
+
+    const updateCosts = async () => {
+      const costs: Record<number, number> = {};
+      for (const pv of parkedVehicles) {
+        try {
+          const response = await fetch(
+            `http://localhost:8080/reservations/${pv.reservationId}/current-cost`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await response.json();
+          costs[pv.reservationId] = data.currentCost;
+        } catch (err) {
+          console.error('Error fetching cost:', err);
+        }
+      }
+      setCurrentCosts(costs);
+    };
+
+    updateCosts();
+    const interval = setInterval(updateCosts, 3600000);
+    return () => clearInterval(interval);
+  }, [token, parkedVehicles]);
+
+  const calculateDuration = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diffMs = now.getTime() - start.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
 
   const toggleFavorite = async (spot: SpotData) => {
     const spotId = spot.spotId || spot.id;
@@ -207,8 +243,12 @@ export function UserSpots() {
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="text-gray-600">Parked: {new Date(pv.startTime).toLocaleString()}</p>
+                  <p className="text-gray-600">Duration: {calculateDuration(pv.startTime)}</p>
                   <p className="text-gray-600">Rate: RWF {pv.parkingSpot.hourlyRate}/hr</p>
-                  <p className="font-semibold text-indigo-600">Current: RWF {(pv.totalAmount || 0).toLocaleString()}</p>
+                  <p className="font-semibold text-indigo-600">
+                    Current: RWF {(currentCosts[pv.reservationId] || pv.totalAmount || pv.parkingSpot.hourlyRate).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-yellow-600">⏱ Updates every hour</p>
                 </div>
               </div>
             ))}

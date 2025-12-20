@@ -142,4 +142,21 @@ public class ParkingReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return reservationRepository.findByUser_UserId(userId);
     }
+
+    public BigDecimal calculateCurrentCost(Long reservationId) {
+        ParkingReservation reservation = getReservationById(reservationId);
+        
+        if (!"ACTIVE".equals(reservation.getStatus())) {
+            return reservation.getTotalAmount() != null ? reservation.getTotalAmount() : BigDecimal.ZERO;
+        }
+
+        LocalDateTime start = reservation.getStartTime();
+        LocalDateTime now = LocalDateTime.now();
+        
+        long minutes = Duration.between(start, now).toMinutes();
+        double hours = Math.max(1, Math.ceil(minutes / 60.0));
+        
+        BigDecimal hourlyRate = reservation.getParkingSpot().getHourlyRate();
+        return hourlyRate.multiply(BigDecimal.valueOf(hours));
+    }
 }

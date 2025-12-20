@@ -26,12 +26,14 @@ interface UnpaidReservation {
   endTime?: string;
   status: string;
   totalAmount?: number;
+  currentCost?: number;
 }
 
 export function UserPayments() {
   const [unpaid, setUnpaid] = useState<UnpaidReservation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [paying, setPaying] = useState<number | null>(null);
+  const [currentCosts, setCurrentCosts] = useState<Record<number, number>>({});
   const { token } = useAuth();
 
   const loadUnpaidReservations = () => {
@@ -64,6 +66,46 @@ export function UserPayments() {
   useEffect(() => {
     loadUnpaidReservations();
   }, [token]);
+
+  // Update current costs for active reservations
+  useEffect(() => {
+    if (!token || unpaid.length === 0) return;
+
+    const updateCosts = async () => {
+      const costs: Record<number, number> = {};
+      
+      for (const reservation of unpaid) {
+        if (reservation.status === 'ACTIVE') {
+          try {
+            const response = await fetch(
+              `http://localhost:8080/reservations/${reservation.reservationId}/current-cost`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = await response.json();
+            costs[reservation.reservationId] = data.currentCost;
+          } catch (err) {
+            console.error('Error fetching cost:', err);
+          }
+        }
+      }
+      
+      setCurrentCosts(costs);
+    };
+
+    updateCosts();
+    const interval = setInterval(updateCosts, 3600000); // Update every hour
+
+    return () => clearInterval(interval);
+  }, [token, unpaid]);
+
+  const calculateDuration = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diffMs = now.getTime() - start.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
 
   const handlePayment = async (reservationId: number) => {
     if (!token) return;
@@ -204,16 +246,32 @@ export function UserPayments() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">
-                      {new Date(reservation.startTime).toLocaleString()}
-                    </span>
+                    <div>
+                      <span className="text-sm text-gray-600">
+                        {new Date(reservation.startTime).toLocaleString()}
+                      </span>
+                      {reservation.status === 'ACTIVE' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Duration: {calculateDuration(reservation.startTime)}
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {reservation.totalAmount
-                        ? `RWF ${reservation.totalAmount.toLocaleString()}`
-                        : 'Pending'}
-                    </span>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {reservation.status === 'ACTIVE' && currentCosts[reservation.reservationId]
+                          ? `RWF ${currentCosts[reservation.reservationId].toLocaleString()}`
+                          : reservation.totalAmount
+                          ? `RWF ${reservation.totalAmount.toLocaleString()}`
+                          : 'Pending'}
+                      </span>
+                      {reservation.status === 'ACTIVE' && (
+                        <p className="text-xs text-yellow-600 mt-1">
+                          ⏱ Ongoing - Updates every hour
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

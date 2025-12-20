@@ -3,6 +3,7 @@ package parkingSystem.backend.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import parkingSystem.backend.dto.LocationDTO;
 import parkingSystem.backend.model.Location;
 import parkingSystem.backend.service.LocationService;
 
@@ -16,6 +17,11 @@ public class LocationController {
 
     @Autowired
     private LocationService locationService;
+
+    @GetMapping("/hierarchy")
+    public ResponseEntity<List<LocationDTO>> getLocationHierarchy() {
+        return ResponseEntity.ok(locationService.getLocationHierarchy());
+    }
 
     @GetMapping("/provinces")
     public ResponseEntity<List<Location>> getProvinces() {
@@ -46,5 +52,16 @@ public class LocationController {
             request.get("cell"),
             request.get("village")
         ));
+    }
+
+    @DeleteMapping("/{locationId}")
+    public ResponseEntity<?> deleteLocation(@PathVariable Long locationId) {
+        locationService.deleteLocation(locationId);
+        return ResponseEntity.ok(java.util.Map.of("message", "Location deleted successfully"));
+    }
+
+    @PutMapping("/{locationId}")
+    public ResponseEntity<Location> updateLocation(@PathVariable Long locationId, @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(locationService.updateLocation(locationId, request.get("name")));
     }
 }

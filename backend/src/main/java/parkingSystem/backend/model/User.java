@@ -16,6 +16,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@lombok.EqualsAndHashCode(exclude = {"profile", "vehicles", "reservations", "favoriteSpots"})
+@lombok.ToString(exclude = {"profile", "vehicles", "reservations", "favoriteSpots"})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

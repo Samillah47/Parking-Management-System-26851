@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { LocationSelector } from '../../components/LocationSelector';
 
 // Define proper TypeScript interface for Profile
 interface Profile {
@@ -29,19 +30,8 @@ export function ProfilePage() {
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<number | undefined>();
   const { token, user } = useAuth();
-  
-  const [provinces, setProvinces] = useState<Location[]>([]);
-  const [districts, setDistricts] = useState<Location[]>([]);
-  const [sectors, setSectors] = useState<Location[]>([]);
-  const [cells, setCells] = useState<Location[]>([]);
-  const [villages, setVillages] = useState<Location[]>([]);
-  
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedSector, setSelectedSector] = useState('');
-  const [selectedCell, setSelectedCell] = useState('');
-  const [selectedVillage, setSelectedVillage] = useState('');
 
   useEffect(() => {
     if (!token || !user) {
@@ -56,27 +46,21 @@ export function ProfilePage() {
         ? 'http://localhost:8080/staff/profile'
         : 'http://localhost:8080/admin/profile';
 
-    Promise.all([
-      fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-      fetch('http://localhost:8080/api/locations/provinces').then(res => res.json())
-    ])
-    .then(([data, provs]) => {
-      setProfile(data);
-      setFormData({
-        fullName: data.fullName || '',
-        gender: data.gender || '',
-        dateOfBirth: data.dateOfBirth || '',
+    fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        setProfile(data);
+        setFormData({
+          fullName: data.fullName || '',
+          gender: data.gender || '',
+          dateOfBirth: data.dateOfBirth || '',
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Profile fetch error:', err);
+        setLoading(false);
       });
-      if (data.customLocation) {
-        setSelectedProvince(data.customLocation);
-      }
-      setProvinces(provs);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error('Profile fetch error:', err);
-      setLoading(false);
-    });
   }, [token, user]);
 
 
@@ -197,80 +181,19 @@ export function ProfilePage() {
 
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-900">Location</h3>
-                
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Province:</label>
-                  <Input
-                    type="text"
-                    value={selectedProvince}
-                    onChange={(e) => setSelectedProvince(e.target.value)}
-                    placeholder="Enter province name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">District:</label>
-                  <Input
-                    type="text"
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    placeholder="Enter district name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Sector:</label>
-                  <Input
-                    type="text"
-                    value={selectedSector}
-                    onChange={(e) => setSelectedSector(e.target.value)}
-                    placeholder="Enter sector name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Cell:</label>
-                  <Input
-                    type="text"
-                    value={selectedCell}
-                    onChange={(e) => setSelectedCell(e.target.value)}
-                    placeholder="Enter cell name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Village:</label>
-                  <Input
-                    type="text"
-                    value={selectedVillage}
-                    onChange={(e) => setSelectedVillage(e.target.value)}
-                    placeholder="Enter village name"
-                  />
-                </div>
-
+                <LocationSelector 
+                  onLocationSelect={(locationId) => setSelectedLocationId(locationId)}
+                  selectedLocationId={selectedLocationId}
+                />
                 <Button
                   type="button"
                   onClick={async () => {
-                    if (!selectedProvince) {
-                      alert('Please enter at least a province');
+                    if (!selectedLocationId) {
+                      alert('Please select a location');
                       return;
                     }
                     
                     try {
-                      const createRes = await fetch('http://localhost:8080/api/locations/create-hierarchy', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          province: selectedProvince,
-                          district: selectedDistrict,
-                          sector: selectedSector,
-                          cell: selectedCell,
-                          village: selectedVillage
-                        })
-                      });
-                      
-                      const location = await createRes.json();
-                      
                       const locationEndpoint = user.role === 'USER'
                         ? 'http://localhost:8080/users/location'
                         : user.role === 'STAFF'
@@ -283,7 +206,7 @@ export function ProfilePage() {
                           'Authorization': `Bearer ${token}`,
                           'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ locationId: location.locationId })
+                        body: JSON.stringify({ locationId: selectedLocationId })
                       });
                       
                       if (response.ok) {
@@ -297,7 +220,7 @@ export function ProfilePage() {
                       alert('Error saving location');
                     }
                   }}
-                  disabled={!selectedProvince}
+                  disabled={!selectedLocationId}
                   variant="secondary"
                   className="w-full"
                 >

@@ -44,11 +44,13 @@ public class StaffService {
         Long availableSpots = spotRepository.countByStatus("AVAILABLE");
         Long occupiedSpots = spotRepository.countByStatus("OCCUPIED");
         Long reservedSpots = spotRepository.countByStatus("RESERVED");
+        Long pendingPayments = reservationRepository.countByStatusIn(Arrays.asList("ACTIVE", "COMPLETED"));
 
         dashboard.setTotalSpots(totalSpots);
         dashboard.setAvailableSpots(availableSpots);
         dashboard.setOccupiedSpots(occupiedSpots);
         dashboard.setReservedSpots(reservedSpots);
+        dashboard.setPendingPayments(pendingPayments);
 
         if (totalSpots > 0) {
             Double occupancyRate = ((double) (occupiedSpots + reservedSpots) / totalSpots) * 100;
@@ -74,6 +76,7 @@ public class StaffService {
         reservation.setParkingSpot(availableSpot);
         reservation.setStartTime(LocalDateTime.now());
         reservation.setStatus("ACTIVE");
+        reservation.setTotalAmount(availableSpot.getHourlyRate());
 
         reservationRepository.save(reservation);
 
@@ -87,7 +90,7 @@ public class StaffService {
                 .orElseThrow(() -> new ResourceNotFoundException("Spot not found"));
 
         ParkingReservation reservation = reservationRepository.findActiveBySpot(spot)
-                .orElseThrow(() -> new RuntimeException("No active reservation for this spot"));
+                .orElseThrow(() -> new IllegalArgumentException("No active reservation for this spot. Spot status: " + spot.getStatus()));
 
         LocalDateTime entryTime = reservation.getStartTime();
         LocalDateTime exitTime = LocalDateTime.now();
@@ -95,7 +98,9 @@ public class StaffService {
         long durationMinutes = Duration.between(entryTime, exitTime).toMinutes();
         long hours = Math.max(1, (durationMinutes + 59) / 60); // Round up
 
-        BigDecimal totalCharge = spot.getHourlyRate().multiply(BigDecimal.valueOf(hours));
+        BigDecimal parkingCharge = spot.getHourlyRate().multiply(BigDecimal.valueOf(hours));
+        BigDecimal reservationFee = reservation.getTotalAmount() != null ? reservation.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal totalCharge = parkingCharge.add(reservationFee);
 
         reservation.setEndTime(exitTime);
         reservation.setStatus("COMPLETED");
@@ -110,7 +115,7 @@ public class StaffService {
         result.setSpotNumber(spot.getSpotNumber());
         result.setTotalCharge(totalCharge);
         result.setDurationMinutes(durationMinutes);
-        result.setMessage("Vehicle exit processed successfully");
+        result.setMessage("Exit processed. Total: RWF " + totalCharge + " (includes reservation fee if applicable)");
 
         return result;
     }
